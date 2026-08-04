@@ -1,0 +1,31 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6D5EF5"/>
+      <stop offset="100%" stop-color="#8B7CFF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- achtergrond, afgeronde hoeken zoals gangbaar bij PWA-icoons -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- huis-silhouet, eenvoudig en herkenbaar -->
+  <path d="M256 118 L 372 214 V 366 C 372 372.6 366.6 378 360 378
+           H 152 C 145.4 378 140 372.6 140 366 V 214 Z"
+        fill="#FFFFFF" fill-opacity="0.96"/>
+
+  <!-- dak-lijn accent -->
+  <path d="M256 118 L 372 214 M256 118 L 140 214"
+        stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" fill="none"/>
+
+  <!-- checkmark binnen het huis: staat voor 'taak afgerond' -->
+  <path d="M198 268 L 240 310 L 322 226"
+        stroke="#6D5EF5" stroke-width="24" stroke-linecap="round"
+        stroke-linejoin="round" fill="none"/>
+
+  <!-- klein klok-accent rechtsonder: verwijst naar de timer-functie -->
+  <circle cx="366" cy="366" r="52" fill="#FFFFFF"/>
+  <circle cx="366" cy="366" r="52" fill="none" stroke="#6D5EF5" stroke-width="6"/>
+  <path d="M366 340 V 366 L 384 380" stroke="#6D5EF5" stroke-width="9"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

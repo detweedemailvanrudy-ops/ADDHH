@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Huishoud App - Taken Planner</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4a90e2">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+
+  <!-- AUTHENTICATIE CONTAINER -->
+  <div id="auth-container" class="auth-container hidden">
+    <div class="auth-card">
+      <h2>Inloggen</h2>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">E-mailadres</label>
+          <input type="email" id="login-email" required placeholder="jouw@email.nl">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Wachtwoord</label>
+          <input type="password" id="login-password" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary">Inloggen</button>
+        <p id="auth-error" class="auth-error-msg hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- HOOFD APPLICATIE -->
+  <div id="app-container" class="hidden">
+    
+    <!-- APP HEADER -->
+    <header class="app-header">
+      <div class="header-content">
+        <h1>Huishoud Planner</h1>
+        <div class="user-info">
+          <span id="user-email-display"></span>
+          <button id="logout-btn" class="btn-secondary btn-small">Uitloggen</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD STRIP (STATUSBAR) -->
+    <section class="dashboard-strip-wrapper">
+      <div class="dashboard-strip">
+        <div class="strip-item" title="Aantal opeenvolgende actieve dagen">
+          <span class="strip-icon">🔥</span>
+          <span class="strip-text"><strong id="streak-count">0</strong> Dagen Streak</span>
+        </div>
+        <div class="strip-divider">|</div>
+        <div class="strip-item" title="Resterende genadedagen deze maand">
+          <span class="strip-icon">🛡️</span>
+          <span class="strip-text"><strong id="tokens-count">2</strong> Rust-tokens</span>
+        </div>
+        <div class="strip-divider">|</div>
+        <div class="strip-item week-strip-container">
+          <span class="strip-label">Afgelopen 7 dagen:</span>
+          <div id="week-strip-dots" class="week-strip-dots">
+            <!-- Dots worden via JS gegenereerd -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB BLADEN NAVIGATIE -->
+    <nav class="tab-navigation">
+      <button class="tab-btn active" data-tab="tab-vandaag">
+        <span class="tab-icon">📋</span> Vandaag
+      </button>
+      <button class="tab-btn" data-tab="tab-planning">
+        <span class="tab-icon">📅</span> Planning
+      </button>
+      <button class="tab-btn" data-tab="tab-voortgang">
+        <span class="tab-icon">📊</span> Voortgang
+      </button>
+    </nav>
+
+    <!-- MAIN INHOUD -->
+    <main class="container">
+
+      <!-- ==========================================
+           TAB 1: VANDAAG & ACTIEVE TAKEN
+           ========================================== -->
+      <section id="tab-vandaag" class="tab-content active">
+        
+        <!-- Snel toevoegen met Tijdsduur & Energie -->
+        <div class="quick-add-section">
+          <form id="quick-add-form">
+            <input type="text" id="quick-task-title" placeholder="Nieuwe taak (bijv. 'Stofzuigen 15m')..." required>
+            <select id="quick-task-energy" title="Energie-niveau">
+              <option value="laag">⚡ Laag</option>
+              <option value="midden" selected>⚡⚡ Midden</option>
+              <option value="hoog">⚡⚡⚡ Hoog</option>
+            </select>
+            <select id="quick-task-time" title="Geschatte tijd">
+              <option value="5">⏱️ 5 min</option>
+              <option value="15" selected>⏱️ 15 min</option>
+              <option value="30">⏱️ 30 min</option>
+              <option value="60">⏱️ 60 min</option>
+            </select>
+            <button type="submit" class="btn-primary">Toevoegen</button>
+          </form>
+        </div>
+
+        <!-- Filter- en Energiefilter -->
+        <div class="top-controls">
+          <div class="control-group">
+            <label for="energy-filter">Filter op energie:</label>
+            <select id="energy-filter">
+              <option value="alle">Alle niveaus</option>
+              <option value="laag">Alleen Laag</option>
+              <option value="midden">Alleen Midden</option>
+              <option value="hoog">Alleen Hoog</option>
+            </select>
+          </div>
+          <button id="open-tips-btn" class="btn-secondary btn-small">💡 Tips bij Weerstand</button>
+        </div>
+
+        <!-- Takenlijsten -->
+        <div class="tasks-container">
+          
+          <!-- Dringend / Verlopen Block -->
+          <div class="task-block urgent-block">
+            <h3>⚠️ Dringend & Verlopen</h3>
+            <ul id="urgent-task-list" class="task-list"></ul>
+          </div>
+
+          <!-- Quick Wins Block -->
+          <div class="task-block quickwins-block">
+            <h3>⚡ Quick Wins (≤ 15 min & Lage Energie)</h3>
+            <ul id="quickwin-task-list" class="task-list"></ul>
+          </div>
+
+          <!-- Overige Taken Block -->
+          <div class="task-block other-block">
+            <h3>📋 Overige Taken</h3>
+            <ul id="other-task-list" class="task-list"></ul>
+          </div>
+
+        </div>
+
+        <!-- Afgeronde Taken (Onderaan, ingeklapt) -->
+        <div class="completed-section">
+          <details>
+            <summary>Afgeronde taken (<span id="completed-count">0</span>)</summary>
+            <ul id="completed-task-list" class="task-list"></ul>
+          </details>
+        </div>
+
+      </section>
+
+      <!-- ==========================================
+           TAB 2: PLANNING (WEEKGRID)
+           ========================================== -->
+      <section id="tab-planning" class="tab-content hidden">
+        <div class="week-planner-section">
+          <h3>Komende 7 Dagen</h3>
+          <div id="week-planner-grid" class="week-planner-grid">
+            <!-- Dynamisch opgebouwd via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 3: VOORTGANG & HEATMAP
+           ========================================== -->
+      <section id="tab-voortgang" class="tab-content hidden">
+        <div class="progress-section">
+          <h3>Maandelijkse Activity Heatmap</h3>
+          <p class="section-desc">Overzicht van je voltooide taken en ingezette rustdagen.</p>
+          
+          <div id="month-heatmap-grid" class="month-heatmap-grid">
+            <!-- Dynamisch gevuld via JS -->
+          </div>
+
+          <div class="heatmap-legend">
+            <span>Minder</span>
+            <span class="heat-box level-0"></span>
+            <span class="heat-box level-1"></span>
+            <span class="heat-box level-2"></span>
+            <span class="heat-box level-3"></span>
+            <span>Meer</span>
+            <span class="heat-box level-shield" style="margin-left: 10px;">🛡️</span> Rustdag
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==========================================
+       MODAL 1: TAAK DETAILS & TIMER
+       ========================================== -->
+  <div id="task-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-btn" id="close-modal">&times;</button>
+      
+      <h2 id="modal-task-title">Taak Titel</h2>
+      <p id="modal-task-meta" class="task-meta-info"></p>
+
+      <!-- Timer Module -->
+      <div class="timer-wrapper">
+        <div id="timer-display" class="timer-display">00:00</div>
+        <div class="timer-buttons">
+          <button id="start-timer-btn" class="btn-primary">Start Timer</button>
+          <button id="pause-timer-btn" class="btn-secondary hidden">Pauze</button>
+          <button id="complete-task-btn" class="btn-secondary">Afronden</button>
+         <div class="wake-lock-container">
+          <button type="button" id="wake-lock-btn" class="btn-wake-lock wake-lock-off hidden">
+            📱 Scherm aanhouden: UIT
+          </button>
+        </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- Subtaken / Micro-stappen -->
+      <div class="subtasks-section">
+        <h3>Micro-stappen</h3>
+        <ul id="subtask-list" class="subtask-list"></ul>
+        <form id="add-subtask-form">
+          <input type="text" id="subtask-title-input" placeholder="Voeg een klein stapje toe..." required>
+          <button type="submit" class="btn-secondary btn-small">+</button>
+        </form>
+      </div>
+
+      <hr>
+
+      <!-- Instellingen van de taak -->
+      <div class="modal-settings">
+        <div class="setting-item">
+          <label for="modal-energy">Energie:</label>
+          <select id="modal-energy">
+            <option value="laag">Laag</option>
+            <option value="midden">Midden</option>
+            <option value="hoog">Hoog</option>
+          </select>
+        </div>
+
+        <div class="setting-item">
+          <label for="modal-time">Geschatte tijd (min):</label>
+          <input type="number" id="modal-time" min="1" max="240">
+        </div>
+
+        <div class="setting-item">
+          <label for="modal-repeat">Herhalen elke (dagen):</label>
+          <input type="number" id="modal-repeat" min="0" placeholder="0 = niet herhalen">
+        </div>
+
+        <div class="setting-item">
+          <label for="modal-snooze-date">Sluimeren tot datum:</label>
+          <input type="date" id="modal-snooze-date">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="snooze-1-day-btn" class="btn-secondary">🌙 1 Dag Sluimeren</button>
+        <button id="save-task-btn" class="btn-primary">Opslaan</button>
+        <button id="delete-task-btn" class="btn-danger">Verwijderen</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 2: WEERSTAND REGISTRATIE
+       ========================================== -->
+  <div id="resistance-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-btn" id="close-resistance-modal">&times;</button>
+      <h2>Wat houd je tegen?</h2>
+      <p>Kies de reden waarom je deze taak nu uitstelt:</p>
+
+      <div class="resistance-options">
+        <button class="btn-resistance" data-reason="Te moe / Geen energie">😴 Te moe / Geen energie</button>
+        <button class="btn-resistance" data-reason="Geen zin / Saai">Geen zin / Saai</button>
+        <button class="btn-resistance" data-reason="Taak is te groot / Onduidelijk">🧩 Taak is te groot / Onduidelijk</button>
+        <button class="btn-resistance" data-reason="Geen tijd nu">⏱️ Geen tijd nu</button>
+      </div>
+
+      <div id="resistance-note-wrapper" class="hidden">
+        <textarea id="resistance-note" placeholder="Optionele toelichting..."></textarea>
+      </div>
+
+      <div class="resistance-actions">
+        <button id="confirm-resistance-btn" class="btn-primary" disabled>Opslaan & Sluimeren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 3: TIPS BIJ WEERSTAND
+       ========================================== -->
+  <div id="tips-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-btn" id="close-tips-modal">&times;</button>
+      <h2>Tips bij Weerstand</h2>
+      <ul id="tips-list" class="tips-list"></ul>
+      <form id="add-tip-form">
+        <input type="text" id="new-tip-input" placeholder="Voeg eigen tip toe..." required>
+        <button type="submit" class="btn-primary btn-small">Toevoegen</button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ES Module script laden -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
